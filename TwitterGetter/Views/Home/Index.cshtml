@@ -1,0 +1,70 @@
+﻿<meta http-equiv="Refresh" content="60">
+<div class="jumbotron">
+    <h1>Twitter Getter</h1>
+</div>
+<div id="twitterLoginDisplay">
+    @if (ViewBag.LoggedInUser != null)
+    {
+        <span>Welcome, @ViewBag.LoggedInUser</span>
+    }
+    else
+    {
+        @Html.ActionLink("Sign into Twitter", "TwitterSignIn", "Home");
+    }
+</div>
+
+<label>Filter</label><input id="TweetFilter" type="text" maxlength="12" />
+<h2>Twitter Latest for User: Salesforce</h2>
+<div id="tweetResults">
+</div>
+
+<script type="text/javascript">
+
+    $("#TweetFilter").keyup(function () {
+        filterResults();
+    });
+
+    function filterResults() {
+        var filterText = $("#TweetFilter").val();
+
+        if (!filterText) {
+            return getTweetsFromServer();
+        }
+
+        else if (filterText.length >= 4) {
+            return getTweetsFromServer(filterText);
+        }
+    }
+
+    function getTweetsFromServer(filterText) {
+
+        if (!filterText)
+            filterText = '';
+
+        var uri = '/api/tweets/salesforce/10';
+
+        if (filterText) {
+            uri += ('/' + filterText);
+        }
+        $.ajax({
+            url: uri,
+            cache: false,
+            success: function (data) {
+                $("#tweetResults").empty();
+                for (var i = 0; i < data.length; i += 1) {
+                    var tweetUrl = data[i].url;
+                    var getEmbeddedTweet = 'https://publish.twitter.com/oembed?url=' + tweetUrl + '&callback=?';
+                    
+                    $.getJSON(getEmbeddedTweet, function (tweetHtmlContent) {
+                        if (tweetHtmlContent && tweetHtmlContent.html)
+                            $("#tweetResults").append(tweetHtmlContent.html);
+                    });
+                }
+            }
+        });
+    }
+
+    $(document).ready(function ($) {
+        getTweetsFromServer();
+    });
+</script>
